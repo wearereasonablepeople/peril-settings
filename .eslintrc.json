@@ -1,0 +1,16 @@
+{
+  "root": true,
+  "extends": ["warp/es6", "warp/node"],
+  "parserOptions": {
+    "ecmaVersion": 2018
+  },
+  "overrides": [
+    {
+      "files": "**/*.test.js",
+      "plugins": ["jest"],
+      "env": {
+        "jest": true
+      }
+    }
+  ]
+}
