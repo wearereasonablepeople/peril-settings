@@ -1,6 +1,6 @@
 'use strict';
 
-const {missingChangesHeader, missingMotivationHeader} = require('./pr-body');
+const {missingChangesHeader, missingMotivationHeader} = require('./all-prs');
 
 beforeEach(() => {
   global.warn = jest.fn();

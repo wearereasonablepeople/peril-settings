@@ -1,6 +1,6 @@
 'use strict';
 
-const {lineLength, typePrefix} = require('./commits');
+const {lineLength, typePrefix} = require('./all-prs');
 const {repeat} = require('ramda');
 
 beforeEach(() => {

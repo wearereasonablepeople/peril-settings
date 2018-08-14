@@ -10,7 +10,7 @@ afterEach(() => {
   global.fail = undefined;
 });
 
-const {noReviewers, authorPrefix, assignee} = require('./people');
+const {noReviewers, authorPrefix, assignee} = require('./all-prs');
 
 //eslint-disable-next-line camelcase
 const setReviewers = rs => global.danger = {github: {requested_reviewers: rs}};
