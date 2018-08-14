@@ -17,7 +17,8 @@ const setReviewers = rs => global.danger = {github: {requested_reviewers: rs}};
 const setPrMeta = (ref, login, assignee) => global.danger = {github: {pr: {
   user: {login},
   assignee,
-  base: {ref}
+  head: {ref},
+  base: {ref: 'master'},
 }}};
 
 describe('reviewers', () => {
@@ -42,6 +43,11 @@ describe('branch name', () => {
   });
   it('should be okay if prefix is correct', () => {
     setPrMeta('author/branch-name', 'author');
+    authorPrefix();
+    expect(global.warn).not.toBeCalled();
+  });
+  it('should accept parts of author name', () => {
+    setPrMeta('denver/branch-name', 'DenverCoder9');
     authorPrefix();
     expect(global.warn).not.toBeCalled();
   });

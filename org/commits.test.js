@@ -17,13 +17,13 @@ const setCommits = commits => global.danger = {git: {commits}};
 
 const buildCommit = (
   message,
-  hash = '66d8911a91facb389504a6774e4cf5538fed243e',
+  sha = '66d8911a91facb389504a6774e4cf5538fed243e',
   author = 'Esteban',
 ) => ({
-  hash,
+  sha,
   author,
   message,
-  url: `https://github.com/wearereasonablepeople/RepoCop/pull/123/commits/${hash}`,
+  url: `https://github.com/wearereasonablepeople/RepoCop/pull/123/commits/${sha}`,
 });
 
 describe('lineLength', () => {

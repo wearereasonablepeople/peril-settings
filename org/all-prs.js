@@ -8,6 +8,7 @@ const {
   filter,
   isEmpty,
   split,
+  head,
   ap,
   of,
   none,
@@ -41,7 +42,7 @@ const commitTypes = [
   'revert:',
 ];
 
-const linkForCommit = commit => `[${commit.hash.slice(0, 6)}](${commit.url})`;
+const linkForCommit = commit => `[${commit.sha.slice(0, 6)}](${commit.url})`;
 
 const commitMsg = prop('message');
 
@@ -112,8 +113,13 @@ exports.packageLockChange = () =>
 
 const noAssignee = () => !danger.github.pr.assignee;
 const atLeastNReviewers = n => danger.github.requested_reviewers.length < n;
-const authorMatchesBranchPrefix = () =>
-  danger.github.pr.base.ref.startsWith(`${danger.github.pr.user.login}/`);
+const authorMatchesBranchPrefix = () => {
+  const parts = split('/', danger.github.pr.head.ref);
+  const login = danger.github.pr.user.login.toLowerCase();
+  const prefix = head(parts).toLowerCase();
+  // allow for substring of login
+  return parts.length >= 2 && prefix.length >= 2 && contains(prefix, login);
+};
 
 exports.noReviewers = () =>
   atLeastNReviewers(1)
@@ -123,7 +129,7 @@ exports.noReviewers = () =>
 exports.authorPrefix = () =>
   !authorMatchesBranchPrefix()
     ? warn(`Please rename your base branch so it has your username as a prefix:
-    \`git checkout -b ${danger.github.pr.user.login}/${danger.github.pr.base.ref}\``)
+    \`git checkout -b ${danger.github.pr.user.login}/${danger.github.pr.head.ref}\``)
     : ok('authorPrefix');
 
 exports.assignee = () =>
