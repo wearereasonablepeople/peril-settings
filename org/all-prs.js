@@ -41,7 +41,7 @@ const commitTypes = [
   'revert:',
 ];
 
-const linkForCommit = commit => `[${commit.hash.slice(0, 6)}](${commit.url})`;
+const linkForCommit = commit => `[${commit.sha.slice(0, 6)}](${commit.url})`;
 
 const commitMsg = prop('message');
 
