@@ -1,30 +1,20 @@
-<!--- Provide a general summary of the issue in the Title above -->
+<!-- Based on https://github.com/artsy/peril-settings/blob/master/.github/ISSUE_TEMPLATE.md -->
+## Proposal
 
-## Expected Behavior
-<!--- Tell us what should happen -->
+<!-- An overview of the RFC's main goal -->
 
-## Current Behavior
-<!--- Tell us what happens instead of the expected behavior -->
+## Reasoning
 
-## Possible Solution
-<!--- Not obligatory, but suggest a fix/reason for the bug, -->
+<!-- Rationale for the added value that the Proposal represents -->
 
-## Steps to Reproduce
-<!--- Provide a link to a live example, or an unambiguous set of steps to -->
-<!--- reproduce this bug. Include code to reproduce, if relevant -->
-1.
-2.
-3.
-4.
+## Exceptions:
 
-## Context (Environment)
-<!--- How has this issue affected you? What are you trying to accomplish? -->
-<!--- Providing context helps us come up with a solution that is most useful in the real world -->
+<!--
+- Existing projects with specific restrictions
+- Technical implementation challenges (good is better than perfect)
+-->
 
-<!--- Provide a general summary of the issue in the Title above -->
+## Additional Context:
 
-## Detailed Description
-<!--- Provide a detailed description of the change or addition you are proposing -->
-
-## Possible Implementation
-<!--- Not obligatory, but suggest an idea for implementing addition or change -->
+<!-- Extra discussion, related links -->
+You can see our discussion [in slack here](/link/to/slack.com)
