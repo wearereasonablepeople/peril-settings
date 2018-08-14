@@ -6,8 +6,19 @@
   },
   "overrides": [
     {
-      "files": "**/*.test.js",
-      "plugins": ["jest"],
+      "files": ["src/rules/**/*.js", "dangerfile.js"],
+      "globals": {
+        "danger": false,
+        "warn": false,
+        "fail": false,
+        "message": false
+      }
+    },
+    {
+      "files": ["**/*.test.js", "**/test-utils.js"],
+      "plugins": [
+        "jest"
+      ],
       "env": {
         "jest": true
       }
