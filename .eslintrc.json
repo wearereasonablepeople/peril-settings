@@ -6,7 +6,7 @@
   },
   "overrides": [
     {
-      "files": ["src/rules/**/*.js", "dangerfile.js"],
+      "files": ["org/**/*.js"],
       "globals": {
         "danger": false,
         "warn": false,

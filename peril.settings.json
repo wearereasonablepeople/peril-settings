@@ -8,14 +8,14 @@
     "env_vars": []
   },
   "repos" : {
-    "wearereasonablepeople/repoCop": {
-      "pull_request": "wearereasonablepeople/peril-settings@dangerfile.js"
+    "wearereasonablepeople/RepoCop": {
+      "pull_request": "wearereasonablepeople/peril-settings@org/all-prs.js"
     },
     "wearereasonablepeople/template": {
-      "pull_request": "wearereasonablepeople/peril-settings@dangerfile.js"
+      "pull_request": "wearereasonablepeople/peril-settings@org/all-prs.js"
     },
     "wearereasonablepeople/peril-settings": {
-      "pull_request": "wearereasonablepeople/peril-settings@dangerfile.js"
+      "pull_request": "wearereasonablepeople/peril-settings@org/all-prs.js"
     }
   }
 }
