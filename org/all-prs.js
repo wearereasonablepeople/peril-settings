@@ -8,6 +8,7 @@ const {
   filter,
   isEmpty,
   split,
+  head,
   ap,
   of,
   none,
@@ -112,8 +113,13 @@ exports.packageLockChange = () =>
 
 const noAssignee = () => !danger.github.pr.assignee;
 const atLeastNReviewers = n => danger.github.requested_reviewers.length < n;
-const authorMatchesBranchPrefix = () =>
-  danger.github.pr.head.ref.startsWith(`${danger.github.pr.user.login}/`);
+const authorMatchesBranchPrefix = () => {
+  const parts = split('/', danger.github.pr.head.ref);
+  const login = danger.github.pr.user.login.toLowerCase();
+  const prefix = head(parts).toLowerCase();
+  // allow for substring of login
+  return parts.length >= 2 && prefix.length >= 2 && contains(prefix, login);
+};
 
 exports.noReviewers = () =>
   atLeastNReviewers(1)

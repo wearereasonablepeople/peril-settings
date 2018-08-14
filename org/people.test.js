@@ -46,6 +46,11 @@ describe('branch name', () => {
     authorPrefix();
     expect(global.warn).not.toBeCalled();
   });
+  it('should accept parts of author name', () => {
+    setPrMeta('denver/branch-name', 'DenverCoder9');
+    authorPrefix();
+    expect(global.warn).not.toBeCalled();
+  });
 });
 
 describe('assignee', () => {
