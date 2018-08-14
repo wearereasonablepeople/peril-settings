@@ -17,7 +17,8 @@ const setReviewers = rs => global.danger = {github: {requested_reviewers: rs}};
 const setPrMeta = (ref, login, assignee) => global.danger = {github: {pr: {
   user: {login},
   assignee,
-  base: {ref}
+  head: {ref},
+  base: {ref: 'master'},
 }}};
 
 describe('reviewers', () => {
