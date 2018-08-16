@@ -7,15 +7,7 @@
     ],
     "env_vars": []
   },
-  "repos" : {
-    "wearereasonablepeople/RepoCop": {
-      "pull_request": "wearereasonablepeople/peril-settings@org/all-prs.js"
-    },
-    "wearereasonablepeople/template": {
-      "pull_request": "wearereasonablepeople/peril-settings@org/all-prs.js"
-    },
-    "wearereasonablepeople/peril-settings": {
-      "pull_request": "wearereasonablepeople/peril-settings@org/all-prs.js"
-    }
+  "rules": {
+    "pull_request": "wearereasonablepeople/peril-settings@org/all-prs.js"
   }
 }
