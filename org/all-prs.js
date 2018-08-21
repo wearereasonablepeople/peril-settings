@@ -1,21 +1,8 @@
 'use strict';
 
 const {
-  any,
-  map,
-  prop,
-  compose,
-  filter,
-  isEmpty,
-  split,
-  head,
-  ap,
-  of,
-  none,
-  join,
-  contains,
-  both,
-  complement,
+  any, ap, both, complement, compose, contains, filter, head, isEmpty, join, map, none, of, prop,
+  reject, split, startsWith,
 } = require('ramda');
 
 // # Markdown utils
@@ -51,6 +38,9 @@ const unknownPrefix = compose(none(Boolean), ap(map(startsWithI, commitTypes)), 
 const commitsWithUnkownType =
   filter(compose(unknownPrefix, commitMsg));
 
+const excludeMergeCommits =
+  reject(compose(startsWith('Merge'), commitMsg));
+
 const hasLinesOver = n => compose(
   any(line => line.length > n),
   split('\n'),
@@ -67,7 +57,11 @@ const reportCommits = (reporter, messageFn) => compose(
 );
 
 exports.lineLength = () => {
-  const offendingCommits = commitsWithLinesOver(maxCommitLineLength)(danger.git.commits);
+  const offendingCommits = compose(
+    commitsWithLinesOver(maxCommitLineLength),
+    excludeMergeCommits
+  )(danger.git.commits);
+
   if (!isEmpty(offendingCommits)) {
     reportCommits(fail, commit =>
       `Commit ${linkForCommit(commit)} has lines with over ${maxCommitLineLength} chars.`
@@ -78,7 +72,11 @@ exports.lineLength = () => {
 };
 
 exports.typePrefix = () => {
-  const offendingCommits = commitsWithUnkownType(danger.git.commits);
+  const offendingCommits = compose(
+    commitsWithUnkownType,
+    excludeMergeCommits
+  )(danger.git.commits);
+
   if (!isEmpty(offendingCommits)) {
     reportCommits(warn, commit =>
       `Commit ${linkForCommit(commit)} doesn't contain a known commit type`

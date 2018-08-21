@@ -46,6 +46,16 @@ describe('lineLength', () => {
     lineLength();
     expect(global.fail).not.toBeCalled();
   });
+
+  it('should ignore merge commits', () => {
+    setCommits([
+      //eslint-disable-next-line max-len
+      buildCommit('Merge pull request #42 from wearereasonablepeople/OurOrgNameIsAlreadyPrettyLong/so-merge-commits-can-be-huge')
+    ]);
+
+    lineLength();
+    expect(global.fail).not.toBeCalled();
+  });
 });
 
 describe('format', () => {
@@ -66,6 +76,16 @@ describe('format', () => {
     ]);
 
     typePrefix();
+    expect(global.warn).not.toBeCalled();
+  });
+  it('should ignore Merge commits', () => {
+    setCommits([
+      buildCommit('Merge pull request #42 from wearereasonablepeople/anyone/do-stuff'),
+      buildCommit('feat: a prefix'),
+    ]);
+
+    typePrefix();
+    expect(global.fail).not.toBeCalled();
     expect(global.warn).not.toBeCalled();
   });
 });
