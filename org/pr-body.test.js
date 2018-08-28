@@ -18,7 +18,7 @@ describe('PR body headers', () => {
   it('should require "Motivation"', () => {
     setPrBody('Fixes: #1234');
     missingMotivationHeader();
-    expect(global.fail).toBeCalled();
+    expect(global.warn).toBeCalled();
   });
   it('should suggest "Changes"', () => {
     setPrBody('Fixes: #1234');
