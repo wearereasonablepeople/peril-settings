@@ -142,7 +142,7 @@ const missingMdHeader = header => !(new RegExp(`^#+ *${header}`, 'mi')).test(dan
 
 exports.missingMotivationHeader = () =>
   missingMdHeader('Motivation')
-    ? fail('Please include a Motivation section')
+    ? warn('Please include a Motivation section')
     : ok('missingMotivationHeader');
 exports.missingChangesHeader = () =>
   missingMdHeader('Changes')
