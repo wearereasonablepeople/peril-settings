@@ -103,7 +103,7 @@ exports.typePrefix = () => {
   )(danger.git.commits);
 
   if (!isEmpty(offendingCommits)) {
-    reportCommits(warn, commit =>
+    reportCommits(fail, commit =>
       `Commit ${linkForCommit(commit)} doesn't contain a known commit type`
     )(offendingCommits);
   } else {

@@ -59,14 +59,14 @@ describe('lineLength', () => {
 });
 
 describe('format', () => {
-  it('should warn to add prefix', () => {
+  it('should fail without a correct prefix', () => {
     setCommits([
       buildCommit('feat: a prefix'),
       buildCommit('no prefix', '1234567890'),
     ]);
 
     typePrefix();
-    expect(global.warn).toBeCalledWith(expect.stringContaining('12345'));
+    expect(global.fail).toBeCalledWith(expect.stringContaining('12345'));
   });
   it('should be okay when all have a prefix', () => {
     setCommits([
