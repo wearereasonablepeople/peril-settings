@@ -6,8 +6,7 @@
     "test": "run-s licenses lint jest",
     "jest": "jest",
     "lint": "eslint .",
-    "changelog:preview": "conventional-changelog -p angular",
-    "changelog:update": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "readme": "jsdoc2md -m none -g none -t README.md.hbs org/all-prs.js > README.md",
     "commit": "git-cz",
     "c": "npm run commit",
     "depcheck": "depcheck --specials eslint,bin --parsers='*.js:es7' --ignores=cz-conventional-changelog",
@@ -25,6 +24,7 @@
     "eslint-plugin-jest": "^21.27.2",
     "git-cz": "^1.8.0",
     "jest": "^23.6.0",
+    "jsdoc-to-markdown": "^4.0.1",
     "license-checker": "^20.2.0",
     "npm-run-all": "^4.1.5",
     "ramda": "^0.25.0"

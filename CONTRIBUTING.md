@@ -26,3 +26,13 @@ The issue tracker for this project are GitHub Issues. In order to submit one:
 4. Follow instructions in the README to build and work with the code;
 5. Make sure the tests pass locally on your machine;
 6. Create a Pull Request;
+
+# Updating rules
+
+When updating or creating rules for all pull requests:
+
+1. Create a new function for it in [`all-prs.js`](./org/all-prs.js)
+2. Create relevant unit tests in a `*.test.js`, these should mock `global.warn|fail`
+with spies to verify behavior and inject data by mocking `global.danger.*`
+3. Update the README with `npm run readme`
+4. Open a PR

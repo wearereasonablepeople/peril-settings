@@ -1,3 +1,12 @@
+/**
+ * This file includes rules for all PRs in the org.
+ *
+ * Each rule is exposed as a 0-arity function that reads from the global `danger` object that
+ * is injected with metadata about pull requests
+ *
+ * For documentation on that metadata see http://danger.systems/js/reference.html
+ */
+
 'use strict';
 
 const {
@@ -48,14 +57,16 @@ const hasLinesOver = n => compose(
 const commitsWithLinesOver = n =>
   filter(compose(hasLinesOver(n), commitMsg));
 
-const maxCommitLineLength = 100;
-
 const reportCommits = (reporter, messageFn) => compose(
   reporter,
   mdList,
   map(messageFn),
 );
 
+const maxCommitLineLength = 100;
+/**
+ * Fails when any commit except Merge commits have a line in their body that exceeds 100 characters
+ */
 exports.lineLength = () => {
   const offendingCommits = compose(
     commitsWithLinesOver(maxCommitLineLength),
@@ -71,6 +82,20 @@ exports.lineLength = () => {
   }
 };
 
+/**
+ * Warns when a commit does not have a known type prefix:
+ *
+ *   - feat:
+ *   - fix:
+ *   - test:
+ *   - ci:
+ *   - chore:
+ *   - docs:
+ *   - refactor:
+ *   - style:
+ *   - perf:
+ *   - revert:
+ */
 exports.typePrefix = () => {
   const offendingCommits = compose(
     commitsWithUnkownType,
@@ -96,11 +121,17 @@ exports.packageButNoLock = packageButNoLock;
 const lockButNoPackage = both(complement(hasPackageChanges), hasLockfileChanges);
 exports.lockButNoPackage = lockButNoPackage;
 
+/**
+ * Warns when `package.json` changes but `package-lock.json` doesn't
+ */
 exports.packageJsonChange = () =>
   packageButNoLock(danger.git.modified_files)
     ? warn('There are `package.json` changes with no corresponding `package-lock.json` changes')
     : ok('packageJsonChange');
 
+/**
+ * Warns when `package-lock.json` changes but `package.json` doesn't
+ */
 exports.packageLockChange = () =>
   lockButNoPackage(danger.git.modified_files)
     ? warn('There are `package-lock.json` changes with no corresponding `package.json` changes')
@@ -119,17 +150,26 @@ const authorMatchesBranchPrefix = () => {
   return parts.length >= 2 && prefix.length >= 2 && contains(prefix, login);
 };
 
+/**
+ * Fails when there are no requested reviewers
+ */
 exports.noReviewers = () =>
   atLeastNReviewers(1)
     ? fail('No reviewers requested for this PR')
     : ok('noReviewers');
 
+/**
+ * Warns when the PR's branch doesn't start with the opener's github handle or a substring of it
+ */
 exports.authorPrefix = () =>
   !authorMatchesBranchPrefix()
     ? warn(`Please rename your base branch so it has your username as a prefix:
     \`git checkout -b ${danger.github.pr.user.login}/${danger.github.pr.head.ref}\``)
     : ok('authorPrefix');
 
+/**
+ * Warns when the PR has no assignee
+ */
 exports.assignee = () =>
   noAssignee()
     ? warn('Please assign someone to merge this PR.')
@@ -140,10 +180,17 @@ exports.assignee = () =>
 
 const missingMdHeader = header => !(new RegExp(`^#+ *${header}`, 'mi')).test(danger.github.pr.body);
 
+/**
+ * Warns when there's no `# Motivation` header in the PR markdown body
+ */
 exports.missingMotivationHeader = () =>
   missingMdHeader('Motivation')
     ? warn('Please include a Motivation section')
     : ok('missingMotivationHeader');
+
+/**
+ * Warns when there's no `# Changes` header in the PR markdown body
+ */
 exports.missingChangesHeader = () =>
   missingMdHeader('Changes')
     ? warn('PR text is missing a Changes section')
