@@ -9,8 +9,7 @@
 
 'use strict';
 
-const {resolve} = require('path');
-const {readFileSync} = require('fs');
+const {capitalized} = require('is-verb');
 const {
   any,
   both,
@@ -42,7 +41,6 @@ const ok = test => console.info(`${test} OK`);
 // # Commits
 // Rules related to commit descriptions and body
 
-const verbs = readFileSync(resolve(__dirname, '../data/verbs.txt'), 'utf8').split('\n');
 const approvedVerbs = [
   'Add',
   'Remove',
@@ -85,7 +83,7 @@ exports.tests = {
     critical: true,
     test: pipe(
       path(['git', 'commits']),
-      reject(pipe(commitMsg, split(' '), head, flip(contains)(verbs))),
+      reject(pipe(commitMsg, split(' '), head, capitalized)),
       map(linkForCommit),
       map(commit => (
         `Message for commit ${commit} must start with an imperative verb.`
