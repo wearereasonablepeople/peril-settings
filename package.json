@@ -23,6 +23,7 @@
     "eslint-config-warp": "^3.0.0",
     "eslint-plugin-jest": "^21.27.2",
     "git-cz": "^1.8.0",
+    "is-verb": "^1.0.0",
     "jest": "^23.6.0",
     "jsdoc-to-markdown": "^4.0.1",
     "license-checker": "^20.2.0",
