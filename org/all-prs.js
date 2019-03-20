@@ -9,14 +9,32 @@
 
 'use strict';
 
+const {resolve} = require('path');
+const {readFileSync} = require('fs');
 const {
-  any, ap, both, complement, compose, contains, filter, head, isEmpty, join, map, none, of, prop,
-  reject, split, startsWith,
+  any,
+  both,
+  complement,
+  compose,
+  contains,
+  filter,
+  flip,
+  head,
+  join,
+  last,
+  map,
+  path,
+  pipe,
+  prop,
+  reject,
+  split,
+  startsWith,
+  test,
+  toPairs,
 } = require('ramda');
 
-// # Markdown utils
-const mdList = items => isEmpty(items) ? '' : `- ${join('\n- ', items)}`;
-exports.mdList = mdList;
+const isAscii = exports.isAscii = str => Buffer.from(str, 'utf8').toString('ascii') === str;
+const mdList = exports.mdList = items => join('\n', items.map(t => `- ${t}`));
 
 //eslint-disable-next-line no-console
 const ok = test => console.info(`${test} OK`);
@@ -24,91 +42,94 @@ const ok = test => console.info(`${test} OK`);
 // # Commits
 // Rules related to commit descriptions and body
 
-// TODO: consider using https://github.com/marionebl/commitlint
-const commitTypes = [
-  'feat:',
-  'fix:',
-  'test:',
-  'ci:',
-  'chore:',
-  'docs:',
-  'refactor:',
-  'style:',
-  'perf:',
-  'revert:',
+const verbs = readFileSync(resolve(__dirname, '../data/verbs.txt'), 'utf8').split('\n');
+const approvedVerbs = [
+  'Add',
+  'Remove',
+  'Fix',
+  'Test',
+  'Document',
+  'Refactor',
+  'Style',
+  'Revert',
+  'Update',
+  'Configure',
+  'Deprecate',
+  'Correct',
+  'Improve',
+  'Initialise',
+  'Merge',
+  'Release',
 ];
 
 const linkForCommit = commit => `[${commit.sha.slice(0, 6)}](${commit.url})`;
-
 const commitMsg = prop('message');
+const excludeMergeCommits = reject(compose(startsWith('Merge'), commitMsg));
 
-const startsWithI = needle => haystack => haystack.toLowerCase().startsWith(needle);
-const unknownPrefix = compose(none(Boolean), ap(map(startsWithI, commitTypes)), of);
-const commitsWithUnkownType =
-  filter(compose(unknownPrefix, commitMsg));
+exports.tests = {
 
-const excludeMergeCommits =
-  reject(compose(startsWith('Merge'), commitMsg));
+  commitApprovedVerb: {
+    critical: false,
+    test: pipe(
+      path(['git', 'commits']),
+      reject(pipe(commitMsg, split(' '), head, flip(contains)(approvedVerbs))),
+      map(linkForCommit),
+      map(commit => (
+        `Message for commit ${commit} starts with an uncommon verb, ` +
+        `consider using one of: ${approvedVerbs.join(', ')}.`
+      )),
+    ),
+  },
 
-const hasLinesOver = n => compose(
-  any(line => line.length > n),
-  split('\n'),
-);
-const commitsWithLinesOver = n =>
-  filter(compose(hasLinesOver(n), commitMsg));
+  commitVerb: {
+    critical: true,
+    test: pipe(
+      path(['git', 'commits']),
+      reject(pipe(commitMsg, split(' '), head, flip(contains)(verbs))),
+      map(linkForCommit),
+      map(commit => (
+        `Message for commit ${commit} must start with an imperative verb.`
+      )),
+    ),
+  },
 
-const reportCommits = (reporter, messageFn) => compose(
-  reporter,
-  mdList,
-  map(messageFn),
-);
+  commitMessageLength: {
+    critical: true,
+    test: pipe(
+      path(['git', 'commits']),
+      excludeMergeCommits,
+      filter(pipe(commitMsg, split('\n'), any(x => x.length > 70))),
+      map(linkForCommit),
+      map(commit => (
+        `Commit ${commit} has lines with over 70 characters.`
+      )),
+    )
+  },
 
-const maxCommitLineLength = 100;
-/**
- * Fails when any commit except Merge commits have a line in their body that exceeds 100 characters
- */
-exports.lineLength = () => {
-  const offendingCommits = compose(
-    commitsWithLinesOver(maxCommitLineLength),
-    excludeMergeCommits
-  )(danger.git.commits);
+  commitMessageAscii: {
+    critical: true,
+    test: pipe(
+      path(['git', 'commits']),
+      reject(pipe(commitMsg, split('\n'), head, isAscii)),
+      map(linkForCommit),
+      map(commit => (
+        `Message header for commit ${commit} must contain ASCII characters only.`
+      )),
+    ),
+  },
 
-  if (!isEmpty(offendingCommits)) {
-    reportCommits(fail, commit =>
-      `Commit ${linkForCommit(commit)} has lines with over ${maxCommitLineLength} chars.`
-    )(offendingCommits);
-  } else {
-    ok('lineLength');
+  commitMessagePunctuation: {
+    critical: true,
+    test: pipe(
+      path(['git', 'commits']),
+      reject(pipe(commitMsg, split('\n'), head, last, test(/[a-zA-Z0-9]/))),
+      map(linkForCommit),
+      map(commit => (
+        `Message header for commit ${commit} must end in an alphanumerical character.`
+      )),
+    ),
   }
-};
 
-/**
- * Warns when a commit does not have a known type prefix:
- *
- *   - feat:
- *   - fix:
- *   - test:
- *   - ci:
- *   - chore:
- *   - docs:
- *   - refactor:
- *   - style:
- *   - perf:
- *   - revert:
- */
-exports.typePrefix = () => {
-  const offendingCommits = compose(
-    commitsWithUnkownType,
-    excludeMergeCommits
-  )(danger.git.commits);
-
-  if (!isEmpty(offendingCommits)) {
-    reportCommits(warn, commit =>
-      `Commit ${linkForCommit(commit)} doesn't contain a known commit type`
-    )(offendingCommits);
-  } else {
-    ok('typePrefix');
-  }
 };
 
 // # Files
@@ -196,10 +217,19 @@ exports.missingChangesHeader = () =>
     ? warn('PR text is missing a Changes section')
     : ok('missingChangesHeader');
 
+const runTests = pipe(toPairs, ([name, {critical, test}]) => {
+  const errors = test(danger);
+  const reporter = critical ? fail : warn;
+  if (errors.length === 0) {
+    ok(name);
+  } else {
+    reporter(mdList(errors));
+  }
+});
+
 Object.defineProperty(exports, '__esModule', {value: true});
 exports.default = () => {
-  exports.lineLength();
-  exports.typePrefix();
+  runTests(exports.tests);
   exports.packageJsonChange();
   exports.packageLockChange();
   exports.noReviewers();

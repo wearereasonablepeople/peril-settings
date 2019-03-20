@@ -1,91 +1,77 @@
 'use strict';
 
-const {lineLength, typePrefix} = require('./all-prs');
+const {tests} = require('./all-prs');
 const {repeat} = require('ramda');
 
-beforeEach(() => {
-  global.warn = jest.fn();
-  global.fail = jest.fn();
-});
+const mockDanger = commits => ({git: {commits}});
 
-afterEach(() => {
-  global.warn = undefined;
-  global.fail = undefined;
-});
-
-const setCommits = commits => global.danger = {git: {commits}};
-
-const buildCommit = (
-  message,
-  sha = '66d8911a91facb389504a6774e4cf5538fed243e',
-  author = 'Esteban',
-) => ({
+const mockCommit = (message, sha = '66d8911a', author = 'Esteban') => ({
   sha,
   author,
   message,
-  url: `https://github.com/wearereasonablepeople/RepoCop/pull/123/commits/${sha}`,
+  url: `./commits/${sha}`,
 });
 
-describe('lineLength', () => {
-  it('should fail due to a maximum', () => {
-    setCommits([
-      buildCommit('small message'),
-      buildCommit(repeat('lo', 100).join(), '1234567890'),
-    ]);
+const noApprovedVerb = (
+  'Message for commit [66d891](./commits/66d8911a) starts with an uncommon verb, ' +
+  'consider using one of: Add, Remove, Fix, Test, Document, Refactor, Style, ' +
+  'Revert, Update, Configure, Deprecate, Correct, Improve, Initialise, Merge, Release.'
+);
 
-    lineLength();
-    expect(global.fail).toBeCalledWith(expect.stringContaining('12345'));
-  });
+const noVerb = (
+  'Message for commit [66d891](./commits/66d8911a) must start with an imperative verb.'
+);
 
-  it('should accept small commits', () => {
-    setCommits([
-      buildCommit('small message'),
-      buildCommit('another one'),
-    ]);
+const testAssertions = {
+  commitApprovedVerb: [
+    {fixture: mockDanger([]), expected: []},
+    {fixture: mockDanger([mockCommit('Add new feature')]), expected: []},
+    {fixture: mockDanger([mockCommit('Provoke new feature')]), expected: [noApprovedVerb]},
+    {fixture: mockDanger([mockCommit('add new feature')]), expected: [noApprovedVerb]},
+    {fixture: mockDanger([mockCommit('feat: 💩 I like emoji!!!')]), expected: [noApprovedVerb]},
+  ],
 
-    lineLength();
-    expect(global.fail).not.toBeCalled();
-  });
+  commitVerb: [
+    {fixture: mockDanger([]), expected: []},
+    {fixture: mockDanger([mockCommit('Add new feature')]), expected: []},
+    {fixture: mockDanger([mockCommit('Provoke new feature')]), expected: []},
+    {fixture: mockDanger([mockCommit('add new feature')]), expected: [noVerb]},
+    {fixture: mockDanger([mockCommit('feat: 💩 I like emoji!!!')]), expected: [noVerb]},
+  ],
 
-  it('should ignore merge commits', () => {
-    setCommits([
-      //eslint-disable-next-line max-len
-      buildCommit('Merge pull request #42 from wearereasonablepeople/OurOrgNameIsAlreadyPrettyLong/so-merge-commits-can-be-huge')
-    ]);
+  commitMessageLength: [
+    {fixture: mockDanger([]), expected: []},
+    {fixture: mockDanger([mockCommit('small message')]), expected: []},
+    {fixture: mockDanger([mockCommit(repeat('lo', 100).join())]), expected: [
+      'Commit [66d891](./commits/66d8911a) has lines with over 70 characters.'
+    ]}
+  ],
 
-    lineLength();
-    expect(global.fail).not.toBeCalled();
-  });
-});
+  commitMessageAscii: [
+    {fixture: mockDanger([]), expected: []},
+    {fixture: mockDanger([mockCommit('foo bar')]), expected: []},
+    {fixture: mockDanger([mockCommit('!@#$%^&*(){}[]')]), expected: []},
+    {fixture: mockDanger([mockCommit('feat: 💩 I like emoji!!!')]), expected: [
+      'Message header for commit [66d891](./commits/66d8911a) must contain ASCII characters only.'
+    ]},
+  ],
 
-describe('format', () => {
-  it('should warn to add prefix', () => {
-    setCommits([
-      buildCommit('feat: a prefix'),
-      buildCommit('no prefix', '1234567890'),
-    ]);
+  commitMessagePunctuation: [
+    {fixture: mockDanger([]), expected: []},
+    {fixture: mockDanger([mockCommit('foo bar')]), expected: []},
+    {fixture: mockDanger([mockCommit('feat: 💩 I like emoji!!!')]), expected: [
+      'Message header for commit [66d891](./commits/66d8911a) must ' +
+      'end in an alphanumerical character.'
+    ]},
+  ],
+};
 
-    typePrefix();
-    expect(global.warn).toBeCalledWith(expect.stringContaining('12345'));
-  });
-  it('should be okay when all have a prefix', () => {
-    setCommits([
-      buildCommit('feat: a prefix'),
-      buildCommit('Feat: also case insensitive'),
-      buildCommit('ci: another one'),
-    ]);
-
-    typePrefix();
-    expect(global.warn).not.toBeCalled();
-  });
-  it('should ignore Merge commits', () => {
-    setCommits([
-      buildCommit('Merge pull request #42 from wearereasonablepeople/anyone/do-stuff'),
-      buildCommit('feat: a prefix'),
-    ]);
-
-    typePrefix();
-    expect(global.fail).not.toBeCalled();
-    expect(global.warn).not.toBeCalled();
+Object.keys(testAssertions).forEach(testcase => {
+  describe(testcase, () => {
+    testAssertions[testcase].forEach(({fixture, expected}, i) => {
+      it(`passes test ${i + 1}`, () => {
+        expect(tests[testcase].test(fixture)).toEqual(expected);
+      });
+    });
   });
 });
