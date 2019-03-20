@@ -18,6 +18,7 @@ const {
   contains,
   filter,
   flip,
+  forEach,
   head,
   join,
   last,
@@ -215,7 +216,7 @@ exports.missingChangesHeader = () =>
     ? warn('PR text is missing a Changes section')
     : ok('missingChangesHeader');
 
-const runTests = pipe(toPairs, ([name, {critical, test}]) => {
+const runTests = pipe(toPairs, forEach(([name, {critical, test}]) => {
   const errors = test(danger);
   const reporter = critical ? fail : warn;
   if (errors.length === 0) {
@@ -223,7 +224,7 @@ const runTests = pipe(toPairs, ([name, {critical, test}]) => {
   } else {
     reporter(mdList(errors));
   }
-});
+}));
 
 Object.defineProperty(exports, '__esModule', {value: true});
 exports.default = () => {
