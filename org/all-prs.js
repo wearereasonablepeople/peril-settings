@@ -29,7 +29,6 @@ const {
   reject,
   split,
   startsWith,
-  test,
   toPairs,
 } = require('ramda');
 
@@ -64,6 +63,7 @@ const approvedVerbs = [
 const linkForCommit = commit => `[${commit.sha.slice(0, 6)}](${commit.url})`;
 const commitMsg = prop('message');
 const excludeMergeCommits = reject(compose(startsWith('Merge'), commitMsg));
+const R_ALPHA = /[a-zA-Z0-9]/;
 
 exports.tests = {
 
@@ -121,7 +121,7 @@ exports.tests = {
     critical: true,
     test: pipe(
       path(['git', 'commits']),
-      reject(pipe(commitMsg, split('\n'), head, last, test(/[a-zA-Z0-9]/))),
+      reject(pipe(commitMsg, split('\n'), head, last, x => R_ALPHA.test(x))),
       map(linkForCommit),
       map(commit => (
         `Message header for commit ${commit} must end in an alphanumerical character.`
