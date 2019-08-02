@@ -63,7 +63,7 @@ const approvedVerbs = [
 const linkForCommit = commit => `[\`${commit.sha.slice(0, 6)}\`](${commit.html_url})`;
 const commitMsg = prop('message');
 const excludeMergeCommits = reject(compose(startsWith('Merge'), commitMsg));
-const R_ALPHA = /[a-zA-Z0-9]/;
+const R_PUNCTUATION = /[.?!]/;
 
 exports.tests = {
 
@@ -121,10 +121,10 @@ exports.tests = {
     critical: true,
     test: pipe(
       path(['git', 'commits']),
-      reject(pipe(commitMsg, split('\n'), head, last, x => R_ALPHA.test(x))),
+      filter(pipe(commitMsg, split('\n'), head, last, x => R_PUNCTUATION.test(x))),
       map(linkForCommit),
       map(commit => (
-        `Message header for commit ${commit} must end in an alphanumerical character.`
+        `Message header for commit ${commit} must not end with punctuation.`
       )),
     ),
   }

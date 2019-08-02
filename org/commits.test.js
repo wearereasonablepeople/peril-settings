@@ -60,9 +60,10 @@ const testAssertions = {
   commitMessagePunctuation: [
     {fixture: mockDanger([]), expected: []},
     {fixture: mockDanger([mockCommit('foo bar')]), expected: []},
+    {fixture: mockDanger([mockCommit('Merge branch "master" into "production"')]), expected: []},
     {fixture: mockDanger([mockCommit('feat: 💩 I like emoji!!!')]), expected: [
       'Message header for commit [`66d891`](./commits/66d8911a) must ' +
-      'end in an alphanumerical character.'
+      'not end with punctuation.'
     ]},
   ],
 };
