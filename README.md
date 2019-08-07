@@ -80,6 +80,8 @@ This is the list of current rules in this repository:
 
 [Danger JS][] runs a set of rules against PRs to enforce conventions around code review.
 
+## Running locally
+
 In order to run the rules on your machine against an existing PR, do the following:
 
 1. Go to your [github settings](https://github.com/settings/tokens) and generate a token with `repo` access
