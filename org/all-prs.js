@@ -60,7 +60,7 @@ const approvedVerbs = [
   'Release',
 ];
 
-const linkForCommit = commit => `[\`${commit.sha.slice(0, 6)}\`](${commit.html_url})`;
+const linkForCommit = commit => `[${commit.sha.slice(0, 6)}](${commit.url})`;
 const commitMsg = prop('message');
 const excludeMergeCommits = reject(compose(startsWith('Merge'), commitMsg));
 const R_PUNCTUATION = /[.?!]/;
