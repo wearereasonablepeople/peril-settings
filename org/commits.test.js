@@ -3,12 +3,14 @@
 const {tests} = require('./all-prs');
 const {repeat} = require('ramda');
 
-const mockDanger = commits => ({git: {commits}});
+const mockDanger = commits => ({github: {commits}});
 
 const mockCommit = (message, sha = '66d8911a', author = 'Esteban') => ({
   sha,
   author,
-  message,
+  commit: {
+    message,
+  },
   //eslint-disable-next-line camelcase
   html_url: `./commits/${sha}`,
 });
