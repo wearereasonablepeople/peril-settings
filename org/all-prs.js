@@ -25,7 +25,6 @@ const {
   map,
   path,
   pipe,
-  prop,
   reject,
   split,
   startsWith,
@@ -61,7 +60,7 @@ const approvedVerbs = [
 ];
 
 const linkForCommit = commit => `[\`${commit.sha.slice(0, 6)}\`](${commit.html_url})`;
-const commitMsg = prop('message');
+const commitMsg = path(['commit', 'message']);
 const excludeMergeCommits = reject(compose(startsWith('Merge'), commitMsg));
 const R_PUNCTUATION = /[.?!]/;
 
@@ -70,7 +69,7 @@ exports.tests = {
   commitApprovedVerb: {
     critical: false,
     test: pipe(
-      path(['git', 'commits']),
+      path(['github', 'commits']),
       reject(pipe(commitMsg, split(' '), head, flip(contains)(approvedVerbs))),
       map(linkForCommit),
       map(commit => (
@@ -83,7 +82,7 @@ exports.tests = {
   commitVerb: {
     critical: true,
     test: pipe(
-      path(['git', 'commits']),
+      path(['github', 'commits']),
       reject(pipe(commitMsg, split(' '), head, capitalized)),
       map(linkForCommit),
       map(commit => (
@@ -95,7 +94,7 @@ exports.tests = {
   commitMessageLength: {
     critical: true,
     test: pipe(
-      path(['git', 'commits']),
+      path(['github', 'commits']),
       excludeMergeCommits,
       filter(pipe(commitMsg, split('\n'), any(x => x.length > 70))),
       map(linkForCommit),
@@ -108,7 +107,7 @@ exports.tests = {
   commitMessageAscii: {
     critical: true,
     test: pipe(
-      path(['git', 'commits']),
+      path(['github', 'commits']),
       reject(pipe(commitMsg, split('\n'), head, isAscii)),
       map(linkForCommit),
       map(commit => (
@@ -120,7 +119,7 @@ exports.tests = {
   commitMessagePunctuation: {
     critical: true,
     test: pipe(
-      path(['git', 'commits']),
+      path(['github', 'commits']),
       filter(pipe(commitMsg, split('\n'), head, last, x => R_PUNCTUATION.test(x))),
       map(linkForCommit),
       map(commit => (
