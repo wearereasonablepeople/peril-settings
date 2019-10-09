@@ -21,8 +21,10 @@ const {
   forEach,
   head,
   ifElse,
+  isNil,
   join,
   last,
+  lt,
   map,
   path,
   pipe,
@@ -64,6 +66,14 @@ const R_PUNCTUATION = /[.?!]/;
 
 const hasPackageChanges = contains('package.json');
 const hasLockfileChanges = contains('package-lock.json');
+
+const authorMatchesBranchPrefix = d => {
+  const parts = split('/', d.github.pr.head.ref);
+  const login = d.github.pr.user.login.toLowerCase();
+  const prefix = head(parts).toLowerCase();
+  // allow for substring of login
+  return parts.length >= 2 && prefix.length >= 2 && contains(prefix, login);
+};
 
 exports.tests = {
 
@@ -169,45 +179,53 @@ exports.tests = {
     ),
   },
 
+  // # People
+  // Rules related to PR assignees, reviewers, etc.
+
+  /**
+   * Fails when there are no requested reviewers
+   */
+  noReviewers: {
+    critical: true,
+    test: pipe(
+      path(['github', 'requested_reviewers', 'length']),
+      ifElse(
+        flip(lt)(1),
+        () => ['No reviewers requested for this PR'],
+        () => [],
+      ),
+    ),
+  },
+
+  /**
+   * Warns when the PR's branch doesn't start with the opener's github handle or a substring of it
+   */
+  authorPrefix: {
+    critical: false,
+    test: d => authorMatchesBranchPrefix(d)
+      ? []
+      : [
+        'Please rename your base branch so it has your username as a prefix:\n' +
+        `\`git checkout -b ${d.github.pr.user.login}/${d.github.pr.head.ref}\``,
+      ],
+  },
+
+  /**
+   * Warns when the PR has no assignee
+   */
+  assignee: {
+    critical: false,
+    test: pipe(
+      path(['github', 'pr', 'assignee']),
+      ifElse(
+        isNil,
+        () => ['Please assign someone to merge this PR.'],
+        () => [],
+      ),
+    ),
+  },
+
 };
-
-// # People
-// Rules related to PR assignees, reviewers, etc.
-
-const noAssignee = () => !danger.github.pr.assignee;
-const atLeastNReviewers = n => danger.github.requested_reviewers.length < n;
-const authorMatchesBranchPrefix = () => {
-  const parts = split('/', danger.github.pr.head.ref);
-  const login = danger.github.pr.user.login.toLowerCase();
-  const prefix = head(parts).toLowerCase();
-  // allow for substring of login
-  return parts.length >= 2 && prefix.length >= 2 && contains(prefix, login);
-};
-
-/**
- * Fails when there are no requested reviewers
- */
-exports.noReviewers = () =>
-  atLeastNReviewers(1)
-    ? fail('No reviewers requested for this PR')
-    : ok('noReviewers');
-
-/**
- * Warns when the PR's branch doesn't start with the opener's github handle or a substring of it
- */
-exports.authorPrefix = () =>
-  !authorMatchesBranchPrefix()
-    ? warn(`Please rename your base branch so it has your username as a prefix:
-    \`git checkout -b ${danger.github.pr.user.login}/${danger.github.pr.head.ref}\``)
-    : ok('authorPrefix');
-
-/**
- * Warns when the PR has no assignee
- */
-exports.assignee = () =>
-  noAssignee()
-    ? warn('Please assign someone to merge this PR.')
-    : ok('assignee');
 
 // # PR text body
 // Rules related to the PR's body of markdown text
@@ -243,9 +261,6 @@ const runTests = pipe(toPairs, forEach(([name, {critical, test}]) => {
 Object.defineProperty(exports, '__esModule', {value: true});
 exports.default = () => {
   runTests(exports.tests);
-  exports.noReviewers();
-  exports.authorPrefix();
-  exports.assignee();
   exports.missingMotivationHeader();
   exports.missingChangesHeader();
 };

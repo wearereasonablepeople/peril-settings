@@ -1,67 +1,57 @@
 'use strict';
 
-beforeEach(() => {
-  global.warn = jest.fn();
-  global.fail = jest.fn();
+/* eslint-disable camelcase */
+
+const {tests} = require('./all-prs');
+
+const mockDanger = ({
+  requested_reviewers = [{login: 'esteban'}],
+  ref = 'author/branch-name',
+  login = 'author',
+  assignee = {login: 'author'},
+} = {}) => ({
+  github: {
+    requested_reviewers,
+    pr: {
+      head: {ref},
+      user: {login},
+      assignee,
+    },
+  },
 });
 
-afterEach(() => {
-  global.warn = undefined;
-  global.fail = undefined;
-});
+const noPrefix = (
+  'Please rename your base branch so it has your username as a prefix:\n' +
+  '`git checkout -b author/branch-name`'
+);
 
-const {noReviewers, authorPrefix, assignee} = require('./all-prs');
+const testAssertions = {
+  noReviewers: [
+    {fixture: mockDanger(), expected: []},
+    {fixture: mockDanger({requested_reviewers: []}), expected: [
+      'No reviewers requested for this PR'
+    ]},
+  ],
 
-//eslint-disable-next-line camelcase
-const setReviewers = rs => global.danger = {github: {requested_reviewers: rs}};
-const setPrMeta = (ref, login, assignee) => global.danger = {github: {pr: {
-  user: {login},
-  assignee,
-  head: {ref},
-  base: {ref: 'master'},
-}}};
+  authorPrefix: [
+    {fixture: mockDanger(), expected: []},
+    {fixture: mockDanger({ref: 'branch-name'}), expected: [noPrefix]},
+    {fixture: mockDanger({ref: 'bob/branch-name', login: 'bob'}), expected: []},
+    {fixture: mockDanger({ref: 'denver/branch-name', login: 'DenverCoder9'}), expected: []},
+  ],
 
-describe('reviewers', () => {
-  it('should fail when no reviewers', () => {
-    setReviewers([]);
-    noReviewers();
-    expect(global.fail).toBeCalled();
-  });
+  assignee: [
+    {fixture: mockDanger(), expected: []},
+    {fixture: mockDanger({assignee: null}), expected: ['Please assign someone to merge this PR.']},
+  ],
+};
 
-  it('should be okay with a single reviewer', () => {
-    setReviewers(['Esteban']);
-    noReviewers();
-    expect(global.fail).not.toBeCalled();
-  });
-});
-
-describe('branch name', () => {
-  it('should start with author name', () => {
-    setPrMeta('branch-name', 'author');
-    authorPrefix();
-    expect(global.warn).toBeCalledWith(expect.stringContaining('author'));
-  });
-  it('should be okay if prefix is correct', () => {
-    setPrMeta('author/branch-name', 'author');
-    authorPrefix();
-    expect(global.warn).not.toBeCalled();
-  });
-  it('should accept parts of author name', () => {
-    setPrMeta('denver/branch-name', 'DenverCoder9');
-    authorPrefix();
-    expect(global.warn).not.toBeCalled();
-  });
-});
-
-describe('assignee', () => {
-  it('should warn if not present', () => {
-    setPrMeta('branch-name', 'author', undefined);
-    assignee();
-    expect(global.warn).toBeCalled();
-  });
-  it('should be okay if present', () => {
-    setPrMeta('branch-name', 'author', 'esteban');
-    assignee();
-    expect(global.warn).not.toBeCalled();
+Object.keys(testAssertions).forEach(testcase => {
+  describe(testcase, () => {
+    testAssertions[testcase].forEach(({fixture, expected}, i) => {
+      it(`passes test ${i + 1}`, () => {
+        expect(tests[testcase].test(fixture)).toEqual(expected);
+      });
+    });
   });
 });
