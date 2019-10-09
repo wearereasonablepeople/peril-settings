@@ -1,63 +1,46 @@
 'use strict';
 
-const {
-  packageJsonChange,
-  packageLockChange,
-  packageButNoLock,
-  lockButNoPackage,
-} = require('./all-prs');
+const {tests} = require('./all-prs');
 
-beforeEach(() => {
-  global.warn = jest.fn();
-  global.fail = jest.fn();
-});
+// eslint-disable-next-line camelcase
+const mockDanger = modified_files => ({git: {modified_files}});
 
-afterEach(() => {
-  global.warn = undefined;
-  global.fail = undefined;
-});
+const packageButNoLock = (
+  'There are `package.json` changes with no corresponding `package-lock.json` changes'
+);
 
-//eslint-disable-next-line camelcase
-const modFiles = files => ({git: {modified_files: files}});
+const lockButNoPackage = (
+  'There are `package-lock.json` changes with no corresponding `package.json` changes'
+);
 
-describe('packageButNoLock', () => {
-  it.each([
-    [[], false],
-    [['package.json', 'package-lock.json', 'some-file.js'], false],
-    [['package-lock.json'], false],
-    [['package.json'], true],
-    [['some-file.js'], false],
-  ])('%p should be %s',
-    (changes, expected) => expect(packageButNoLock(changes)).toBe(expected));
-});
+const testAssertions = {
+  packageJsonChange: [
+    {fixture: mockDanger([]), expected: []},
+    {fixture: mockDanger(['package.json', 'package-lock.json']), expected: []},
+    {fixture: mockDanger(['package.json', 'package-lock.json', 'some-file.js']), expected: []},
+    {fixture: mockDanger(['package.json']), expected: [packageButNoLock]},
+    {fixture: mockDanger(['package-lock.json']), expected: []},
+    {fixture: mockDanger(['some-file.js']), expected: []},
+    {fixture: mockDanger(['one.js', 'other.js']), expected: []},
+  ],
 
-describe('lockButNoPackage', () => {
-  it.each([
-    [[], false],
-    [['package.json', 'package-lock.json', 'some-file.js'], false],
-    [['package-lock.json'], true],
-    [['package.json'], false],
-    [['some-file.js'], false],
-  ])('%p should be %s',
-    (changes, expected) => expect(lockButNoPackage(changes)).toBe(expected));
-});
+  packageLockChange: [
+    {fixture: mockDanger([]), expected: []},
+    {fixture: mockDanger(['package.json', 'package-lock.json']), expected: []},
+    {fixture: mockDanger(['package.json', 'package-lock.json', 'some-file.js']), expected: []},
+    {fixture: mockDanger(['package.json']), expected: []},
+    {fixture: mockDanger(['package-lock.json']), expected: [lockButNoPackage]},
+    {fixture: mockDanger(['some-file.js']), expected: []},
+    {fixture: mockDanger(['one.js', 'other.js']), expected: []},
+  ],
+};
 
-describe('package and lockfile', () => {
-  it('should warn when only the package file is edited', () => {
-    global.danger = modFiles(['package.json']);
-    packageJsonChange();
-    expect(global.warn).toBeCalled();
-  });
-  it('should warn when only the lockfile is edited', () => {
-    global.danger = modFiles(['package-lock.json']);
-    packageLockChange();
-    expect(global.warn).toBeCalled();
-  });
-  it('should ignore other files', () => {
-    global.danger = modFiles(['one.js', 'other.js']);
-    packageLockChange();
-    packageJsonChange();
-    expect(global.warn).not.toBeCalled();
-    expect(global.fail).not.toBeCalled();
+Object.keys(testAssertions).forEach(testCase => {
+  describe(testCase, () => {
+    testAssertions[testCase].forEach(({fixture, expected}, i) => {
+      it(`passes test ${i + 1}`, () => {
+        expect(tests[testCase].test(fixture)).toEqual(expected);
+      });
+    });
   });
 });

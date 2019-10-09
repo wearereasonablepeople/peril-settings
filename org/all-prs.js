@@ -20,6 +20,7 @@ const {
   flip,
   forEach,
   head,
+  ifElse,
   join,
   last,
   map,
@@ -36,9 +37,6 @@ const mdList = exports.mdList = items => join('\n', items.map(t => `- ${t}`));
 
 //eslint-disable-next-line no-console
 const ok = test => console.info(`${test} OK`);
-
-// # Commits
-// Rules related to commit descriptions and body
 
 const approvedVerbs = [
   'Add',
@@ -64,7 +62,13 @@ const commitMsg = path(['commit', 'message']);
 const excludeMergeCommits = reject(compose(startsWith('Merge'), commitMsg));
 const R_PUNCTUATION = /[.?!]/;
 
+const hasPackageChanges = contains('package.json');
+const hasLockfileChanges = contains('package-lock.json');
+
 exports.tests = {
+
+  // # Commits
+  // Rules related to commit descriptions and body
 
   commitApprovedVerb: {
     critical: false,
@@ -126,35 +130,46 @@ exports.tests = {
         `Message header for commit ${commit} must not end with punctuation.`
       )),
     ),
-  }
+  },
+
+  // # Files
+  // Rules related to specific changed files in PRs.
+
+  /**
+   * Warns when `package.json` changes but `package-lock.json` doesn't
+   */
+  packageJsonChange: {
+    critical: false,
+    test: pipe(
+      path(['git', 'modified_files']),
+      ifElse(
+        both(hasPackageChanges, complement(hasLockfileChanges)),
+        () => [
+          'There are `package.json` changes with no corresponding `package-lock.json` changes',
+        ],
+        () => [],
+      ),
+    ),
+  },
+
+  /**
+   * Warns when `package-lock.json` changes but `package.json` doesn't
+   */
+  packageLockChange: {
+    critical: false,
+    test: pipe(
+      path(['git', 'modified_files']),
+      ifElse(
+        both(complement(hasPackageChanges), hasLockfileChanges),
+        () => [
+          'There are `package-lock.json` changes with no corresponding `package.json` changes',
+        ],
+        () => [],
+      ),
+    ),
+  },
 
 };
-
-// # Files
-// Rules related to specific changed files in PRs.
-
-const hasPackageChanges = contains('package.json');
-const hasLockfileChanges = contains('package-lock.json');
-const packageButNoLock = both(hasPackageChanges, complement(hasLockfileChanges));
-exports.packageButNoLock = packageButNoLock;
-const lockButNoPackage = both(complement(hasPackageChanges), hasLockfileChanges);
-exports.lockButNoPackage = lockButNoPackage;
-
-/**
- * Warns when `package.json` changes but `package-lock.json` doesn't
- */
-exports.packageJsonChange = () =>
-  packageButNoLock(danger.git.modified_files)
-    ? warn('There are `package.json` changes with no corresponding `package-lock.json` changes')
-    : ok('packageJsonChange');
-
-/**
- * Warns when `package-lock.json` changes but `package.json` doesn't
- */
-exports.packageLockChange = () =>
-  lockButNoPackage(danger.git.modified_files)
-    ? warn('There are `package-lock.json` changes with no corresponding `package.json` changes')
-    : ok('packageLockChange');
 
 // # People
 // Rules related to PR assignees, reviewers, etc.
@@ -228,8 +243,6 @@ const runTests = pipe(toPairs, forEach(([name, {critical, test}]) => {
 Object.defineProperty(exports, '__esModule', {value: true});
 exports.default = () => {
   runTests(exports.tests);
-  exports.packageJsonChange();
-  exports.packageLockChange();
   exports.noReviewers();
   exports.authorPrefix();
   exports.assignee();
