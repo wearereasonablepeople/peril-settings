@@ -1,44 +1,47 @@
 'use strict';
 
-const {missingChangesHeader, missingMotivationHeader} = require('./all-prs');
+const {tests} = require('./all-prs');
 
-beforeEach(() => {
-  global.warn = jest.fn();
-  global.fail = jest.fn();
-});
+const mockDanger = body => ({github: {pr: {body}}});
 
-afterEach(() => {
-  global.warn = undefined;
-  global.fail = undefined;
-});
+const motivation = `# Motivation
+Fixes: #1234`;
 
-const setPrBody = body => global.danger = {github: {pr: {body}}};
-
-describe('PR body headers', () => {
-  it('should require "Motivation"', () => {
-    setPrBody('Fixes: #1234');
-    missingMotivationHeader();
-    expect(global.warn).toBeCalled();
-  });
-  it('should suggest "Changes"', () => {
-    setPrBody('Fixes: #1234');
-    missingChangesHeader();
-    expect(global.warn).toBeCalled();
-  });
-
-  it('should be okay with the right headers', () => {
-    setPrBody(`
-# Motivation
-Fixes: #1234
-
-##changes
+const changes = `## Changes
 - Quite
 - a
-- bunch
-`);
-    missingMotivationHeader();
-    missingChangesHeader();
-    expect(global.warn).not.toBeCalled();
-    expect(global.fail).not.toBeCalled();
+- bunch`;
+
+const defaultBody = `${motivation}
+${changes}`;
+
+const testAssertions = {
+  missingMotivationHeader: [
+    {fixture: mockDanger(defaultBody), expected: []},
+    {fixture: mockDanger(''), expected: ['Please include a Motivation section']},
+    {fixture: mockDanger(changes), expected: ['Please include a Motivation section']},
+    {fixture: mockDanger('Lorem ipsum dolor sit amet'), expected: [
+      'Please include a Motivation section',
+    ]},
+  ],
+
+  missingChangesHeader: [
+    {fixture: mockDanger(defaultBody), expected: []},
+    {fixture: mockDanger(''), expected: ['PR text is missing a Changes section']},
+    {fixture: mockDanger(motivation), expected: ['PR text is missing a Changes section']},
+    {fixture: mockDanger('Lorem ipsum dolor sit amet'), expected: [
+      'PR text is missing a Changes section',
+    ]},
+  ],
+};
+
+Object.keys(testAssertions).forEach(testcase => {
+  describe(testcase, () => {
+    testAssertions[testcase].forEach(({fixture, expected}, i) => {
+      it(`passes test ${i + 1}`, () => {
+        expect(tests[testcase].test(fixture)).toEqual(expected);
+      });
+    });
   });
 });
+

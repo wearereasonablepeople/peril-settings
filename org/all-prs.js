@@ -27,6 +27,7 @@ const {
   lt,
   map,
   path,
+  test,
   pipe,
   reject,
   split,
@@ -74,6 +75,8 @@ const authorMatchesBranchPrefix = d => {
   // allow for substring of login
   return parts.length >= 2 && prefix.length >= 2 && contains(prefix, login);
 };
+
+const headerRegExp = header => new RegExp(`^#+ *${header}`, 'mi');
 
 exports.tests = {
 
@@ -225,28 +228,40 @@ exports.tests = {
     ),
   },
 
+  // # PR text body
+  // Rules related to the PR's body of markdown text
+
+  /**
+   * Warns when there's no `# Motivation` header in the PR markdown body
+   */
+  missingMotivationHeader: {
+    critical: false,
+    test: pipe(
+      path(['github', 'pr', 'body']),
+      ifElse(
+        complement(test)(headerRegExp('Motivation')),
+        () => ['Please include a Motivation section'],
+        () => [],
+      ),
+    ),
+  },
+
+  /**
+   * Warns when there's no `# Changes` header in the PR markdown body
+   */
+  missingChangesHeader: {
+    critical: false,
+    test: pipe(
+      path(['github', 'pr', 'body']),
+      ifElse(
+        complement(test)(headerRegExp('Changes')),
+        () => ['PR text is missing a Changes section'],
+        () => [],
+      ),
+    ),
+  },
+
 };
-
-// # PR text body
-// Rules related to the PR's body of markdown text
-
-const missingMdHeader = header => !(new RegExp(`^#+ *${header}`, 'mi')).test(danger.github.pr.body);
-
-/**
- * Warns when there's no `# Motivation` header in the PR markdown body
- */
-exports.missingMotivationHeader = () =>
-  missingMdHeader('Motivation')
-    ? warn('Please include a Motivation section')
-    : ok('missingMotivationHeader');
-
-/**
- * Warns when there's no `# Changes` header in the PR markdown body
- */
-exports.missingChangesHeader = () =>
-  missingMdHeader('Changes')
-    ? warn('PR text is missing a Changes section')
-    : ok('missingChangesHeader');
 
 const runTests = pipe(toPairs, forEach(([name, {critical, test}]) => {
   const errors = test(danger);
@@ -261,6 +276,4 @@ const runTests = pipe(toPairs, forEach(([name, {critical, test}]) => {
 Object.defineProperty(exports, '__esModule', {value: true});
 exports.default = () => {
   runTests(exports.tests);
-  exports.missingMotivationHeader();
-  exports.missingChangesHeader();
 };
