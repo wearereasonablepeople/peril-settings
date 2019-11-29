@@ -42,11 +42,19 @@ const testAssertions = {
     {fixture: mockDanger([mockCommit('feat: 💩 I like emoji!!!')]), expected: [noVerb]},
   ],
 
-  commitMessageLength: [
+  commitHeaderLength: [
     {fixture: mockDanger([]), expected: []},
     {fixture: mockDanger([mockCommit('small message')]), expected: []},
     {fixture: mockDanger([mockCommit(repeat('lo', 100).join())]), expected: [
-      'Commit [`66d891`](./commits/66d8911a) has lines with over 70 characters.'
+      'Commit [`66d891`](./commits/66d8911a) has a header with over 70 characters.'
+    ]}
+  ],
+
+  commitBodyLength: [
+    {fixture: mockDanger([]), expected: []},
+    {fixture: mockDanger([mockCommit('small message\n\nsmall body')]), expected: []},
+    {fixture: mockDanger([mockCommit(`small message\n\n${repeat('lo', 100).join()}`)]), expected: [
+      'Commit [`66d891`](./commits/66d8911a) has a body with lines over 80 characters.'
     ]}
   ],
 

@@ -28,6 +28,7 @@ const {
   reject,
   split,
   startsWith,
+  tail,
   toPairs,
 } = require('ramda');
 
@@ -91,15 +92,28 @@ exports.tests = {
     ),
   },
 
-  commitMessageLength: {
+  commitHeaderLength: {
     critical: true,
     test: pipe(
       path(['github', 'commits']),
       excludeMergeCommits,
-      filter(pipe(commitMsg, split('\n'), any(x => x.length > 70))),
+      filter(pipe(commitMsg, split('\n'), head, x => x.length > 70)),
       map(linkForCommit),
       map(commit => (
-        `Commit ${commit} has lines with over 70 characters.`
+        `Commit ${commit} has a header with over 70 characters.`
+      )),
+    )
+  },
+
+  commitBodyLength: {
+    critical: false,
+    test: pipe(
+      path(['github', 'commits']),
+      excludeMergeCommits,
+      filter(pipe(commitMsg, split('\n'), tail, any(x => x.length > 80))),
+      map(linkForCommit),
+      map(commit => (
+        `Commit ${commit} has a body with lines over 80 characters.`
       )),
     )
   },
